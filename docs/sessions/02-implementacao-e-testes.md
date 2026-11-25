@@ -80,3 +80,18 @@
 - Implementou `<workspace>/tests/test_cli.py` testando tanto a função `main()` quanto a invocação real via subprocesso `python -m src.cli calcular ...`.
 - Substituiu `<workspace>/README.md` pelas instruções completas de execução e testes do projeto conforme exigido pelo enunciado.
 - Marcou `[x]` em `T-007` no `tasks.md` e `[x]` em `CA-001`..`CA-008` na `spec.md`.
+
+---
+
+## Interação 5 — Preenchimento do Relatório (`docs/RELATORIO.md`) com Evidências dos 4 Ds
+
+**Usuário:**
+> Já deixe o relatorio.mds preenchido
+
+**Agente:**
+- Preencheu `<workspace>/docs/RELATORIO.md` com evidências verificáveis (hashes de commit `0ba5346`, `6e4fb09`, `cabadd2`, `053b90a`, `48afcd5`, `98de944`, `eb730db`, `d0a9dba`, `1bf9600`, `5fe5c5b`, `06dadda`, `9f52c16` e referências às sessões `01` e `02`) cobrindo:
+  - **Delegação:** Tabela completa de divisão de responsabilidades, arrependimento sobre a soma manual delegada em `CA-001` e governança via `CLAUDE.md`.
+  - **Descrição:** Antes (commit `0ba5346`) e Depois (commit `053b90a`, `D-002`) da regra `RN-007` / `AMB-008`.
+  - **Discernimento:** Dois casos concretos e auditáveis onde o agente errou e foi corrigido (`Caso 1: D-002` — regra morta do limite de R$ 250 de hospedagem ao aplicar +50% sobre si mesma; `Caso 2: D-003` — erro aritmético de R$ 101,00 na soma mental de `CA-001` detectado na execução de `test_ca_001_lote_referencia_despesas_exemplo` no commit `5fe5c5b`).
+  - **Diligência:** Procedimento real de verificação, percentual de leitura de diff (85%) e análise crítica da suíte de testes.
+  - **Fechamento:** Reflexão crítica sobre SDD e armadilhas de fluência textual da IA, deixando a seção **O envelope** pronta para ser preenchida após a mudança de requisito do Dia 2.
