@@ -57,10 +57,10 @@
 
 ## Fase 5 — Envelope (Dia 2 — Política de Reembolso v4 e Câmbio)
 
-- [ ] **T-008** — Estender modelos, política externa por centro de custo e tabela de câmbio com fallback de dia útil anterior (`src/models.py`, `src/policy.py`, `src/io_handler.py`)
+- [x] **T-008** — Estender modelos, política externa por centro de custo e tabela de câmbio com fallback de dia útil anterior (`src/models.py`, `src/policy.py`, `src/io_handler.py`)
   - **Atende:** RN-001, RN-004, RN-009, AMB-011, AMB-012, AMB-014
   - **Aceite:** `tests/test_engine.py::test_rn_004_amb_014_politica_v4_por_centro_custo_e_fallback_padrao` e `tests/test_engine.py::test_rn_009_amb_011_amb_012_tabela_cambio_e_fallback_fim_de_semana` passam
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-008)`
 
 - [ ] **T-009** — Atualizar motor de avaliação para conversão cambial antes de nota fiscal, viagem por moeda estrangeira e limites por centro de custo (`src/engine.py`)
   - **Atende:** RN-004, RN-005, RN-007, RN-008, RN-009, AMB-011 a AMB-016

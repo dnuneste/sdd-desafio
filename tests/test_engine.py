@@ -422,3 +422,65 @@ def test_rn_008_amb_001_limite_diario_cumulativo_e_reembolso_parcial() -> None:
     assert relatorio.resumo.total_solicitado == Decimal("110.50")
     assert relatorio.resumo.total_reembolsado == Decimal("60.00")
     assert relatorio.resumo.total_glosado == Decimal("50.50")
+
+
+def test_rn_004_amb_014_politica_v4_por_centro_custo_e_fallback_padrao() -> None:
+    """Verifica leitura de politica-v4.json, limites por CC, limite 0.00 em CC-ENG-PLATAFORMA e fallback padrão (T-008, RN-004, AMB-014)."""
+    from src.io_handler import carregar_politica_json
+
+    politica = carregar_politica_json("exemplos/Envelope/politica-v4.json")
+
+    # CC-COMERCIAL possui representacao (300.00) e alimentacao (90.00, em viagem 135.00)
+    assert politica.categoria_elegivel("representacao", "CC-COMERCIAL") is True
+    assert politica.obter_limite_diario("representacao", False, "CC-COMERCIAL") == Decimal("300.00")
+    assert politica.obter_limite_diario("representacao", True, "CC-COMERCIAL") == Decimal("300.00")
+    assert politica.obter_limite_diario("alimentacao", False, "CC-COMERCIAL") == Decimal("90.00")
+    assert politica.obter_limite_diario("alimentacao", True, "CC-COMERCIAL") == Decimal("135.00")
+
+    # CC-ENG-PLATAFORMA tem hospedagem com limite 0.00 ("nao reembolsavel") e alimentacao 75.00
+    assert politica.categoria_elegivel("hospedagem", "CC-ENG-PLATAFORMA") is False
+    assert politica.categoria_elegivel("alimentacao", "CC-ENG-PLATAFORMA") is True
+    assert politica.obter_limite_diario("alimentacao", False, "CC-ENG-PLATAFORMA") == Decimal("75.00")
+
+    # CC-ADM não lista hospedagem -> não elegível
+    assert politica.categoria_elegivel("hospedagem", "CC-ADM") is False
+
+    # CC-SUPORTE-N2 não existe na tabela -> usa fallback padrão (alimentacao 60, hospedagem 250, sem representacao)
+    assert politica.categoria_elegivel("alimentacao", "CC-SUPORTE-N2") is True
+    assert politica.obter_limite_diario("alimentacao", False, "CC-SUPORTE-N2") == Decimal("60.00")
+    assert politica.categoria_elegivel("hospedagem", "CC-SUPORTE-N2") is True
+    assert politica.obter_limite_diario("hospedagem", False, "CC-SUPORTE-N2") == Decimal("250.00")
+    assert politica.categoria_elegivel("representacao", "CC-SUPORTE-N2") is False
+
+
+def test_rn_009_amb_011_amb_012_tabela_cambio_e_fallback_fim_de_semana() -> None:
+    """Verifica leitura de cambio.json, cotação no dia útil, fallback de sábado para sexta e moeda não suportada (T-008, RN-009, AMB-011, AMB-012)."""
+    from datetime import date
+    from src.io_handler import carregar_cambio_json
+
+    cambio = carregar_cambio_json("exemplos/Envelope/cambio.json")
+
+    # BRL sempre retorna 1.00
+    taxa_brl, erro_brl = cambio.obter_taxa(date(2026, 7, 13), "BRL")
+    assert taxa_brl == Decimal("1.00")
+    assert erro_brl is None
+
+    # Dia útil exato: 2026-07-14 EUR = 5.93
+    taxa_eur_14, erro_eur_14 = cambio.obter_taxa(date(2026, 7, 14), "EUR")
+    assert taxa_eur_14 == Decimal("5.93")
+    assert erro_eur_14 is None
+
+    # Sábado 2026-07-18 -> usa cotação de sexta-feira 2026-07-17 (EUR = 5.96)
+    taxa_eur_18, erro_eur_18 = cambio.obter_taxa(date(2026, 7, 18), "EUR")
+    assert taxa_eur_18 == Decimal("5.96")
+    assert erro_eur_18 is None
+
+    # Moeda não cadastrada: GBP em 2026-07-21 -> MOEDA_NAO_SUPORTADA
+    taxa_gbp, erro_gbp = cambio.obter_taxa(date(2026, 7, 21), "GBP")
+    assert taxa_gbp is None
+    assert erro_gbp == "MOEDA_NAO_SUPORTADA"
+
+    # Data anterior à primeira cotação da tabela (ex.: 2026-07-01) -> CAMBIO_INDISPONIVEL
+    taxa_antiga, erro_antiga = cambio.obter_taxa(date(2026, 7, 1), "USD")
+    assert taxa_antiga is None
+    assert erro_antiga == "CAMBIO_INDISPONIVEL"

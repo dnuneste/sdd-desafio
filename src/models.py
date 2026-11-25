@@ -1,8 +1,8 @@
-"""Modelos de domínio e funções de normalização (RN-001, AMB-003, AMB-009)."""
+"""Modelos de domínio e funções de normalização (RN-001, RN-009, AMB-003, AMB-009)."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from enum import Enum
@@ -24,6 +24,13 @@ def normalizar_texto(texto: str) -> str:
     return texto.strip().lower()
 
 
+def normalizar_moeda(moeda: str | None) -> str:
+    """Normaliza o código ISO 4217 da moeda para maiúsculas, assumindo BRL quando omitido (RN-001)."""
+    if not moeda or not str(moeda).strip():
+        return "BRL"
+    return str(moeda).strip().upper()
+
+
 class StatusDespesa(str, Enum):
     """Status final de avaliação de uma despesa (Seção 4 da spec)."""
 
@@ -42,6 +49,8 @@ class CodigoMotivo(str, Enum):
     FORA_PERIODO_COMPETENCIA = "FORA_PERIODO_COMPETENCIA"
     DESPESA_DUPLICADA = "DESPESA_DUPLICADA"
     VALOR_INVALIDO = "VALOR_INVALIDO"
+    MOEDA_NAO_SUPORTADA = "MOEDA_NAO_SUPORTADA"
+    CAMBIO_INDISPONIVEL = "CAMBIO_INDISPONIVEL"
 
 
 @dataclass(frozen=True)
@@ -79,6 +88,9 @@ class DespesaInput:
     valor_original: Decimal
     tem_nota_fiscal: bool
     em_viagem: bool = False
+    moeda_original: str = "BRL"
+    valor_moeda_original: Decimal = Decimal("0.00")
+    taxa_cambio_aplicada: Decimal | None = Decimal("1.00")
 
     @classmethod
     def criar(
@@ -91,10 +103,13 @@ class DespesaInput:
         valor: Decimal | int | str | float,
         tem_nota_fiscal: bool,
         em_viagem: bool = False,
+        moeda: str | None = None,
     ) -> DespesaInput:
         """Cria uma DespesaInput aplicando normalização e arredondamento (RN-001)."""
         data_parsed = date.fromisoformat(data) if isinstance(data, str) else data
         valor_dec = valor if isinstance(valor, Decimal) else Decimal(str(valor))
+        valor_arredondado = arredondar_moeda(valor_dec)
+        moeda_norm = normalizar_moeda(moeda)
         return cls(
             id=id,
             data=data_parsed,
@@ -105,9 +120,20 @@ class DespesaInput:
             fornecedor=fornecedor,
             fornecedor_normalizado=normalizar_texto(fornecedor),
             valor_bruto=valor_dec,
-            valor_original=arredondar_moeda(valor_dec),
+            valor_original=valor_arredondado,
             tem_nota_fiscal=bool(tem_nota_fiscal),
             em_viagem=bool(em_viagem),
+            moeda_original=moeda_norm,
+            valor_moeda_original=valor_arredondado,
+            taxa_cambio_aplicada=Decimal("1.00") if moeda_norm == "BRL" else None,
+        )
+
+    def com_conversao_brl(self, valor_brl: Decimal, taxa: Decimal) -> DespesaInput:
+        """Retorna cópia imutável com o valor convertido para BRL e a taxa aplicada (RN-009)."""
+        return replace(
+            self,
+            valor_original=arredondar_moeda(valor_brl),
+            taxa_cambio_aplicada=taxa,
         )
 
 
@@ -125,6 +151,9 @@ class ResultadoDespesa:
     status: StatusDespesa
     codigo_motivo: CodigoMotivo
     justificativa: str
+    moeda_original: str = "BRL"
+    valor_moeda_original: Decimal | None = None
+    taxa_cambio_aplicada: Decimal | None = Decimal("1.00")
 
 
 @dataclass(frozen=True)

@@ -1,4 +1,4 @@
-"""Parser de entrada JSON e serializador de saída JSON com precisão Decimal (T-002)."""
+"""Parser de entrada JSON, carregador de política/câmbio e serializador de saída JSON com precisão Decimal (T-002, T-008)."""
 
 from __future__ import annotations
 
@@ -15,6 +15,10 @@ from src.models import (
     RelatorioReembolso,
     arredondar_moeda,
 )
+from src.policy import PoliticaReembolso, TabelaCambio
+
+CAMINHO_POLITICA_V4_PADRAO = Path("exemplos/Envelope/politica-v4.json")
+CAMINHO_CAMBIO_PADRAO = Path("exemplos/Envelope/cambio.json")
 
 
 def parse_entrada_dict(dados: dict[str, Any]) -> tuple[Colaborador, Periodo, list[DespesaInput]]:
@@ -46,6 +50,7 @@ def parse_entrada_dict(dados: dict[str, Any]) -> tuple[Colaborador, Periodo, lis
                 valor=item["valor"],
                 tem_nota_fiscal=bool(item["tem_nota_fiscal"]),
                 em_viagem=bool(item.get("em_viagem", False)),
+                moeda=item.get("moeda"),
             )
         )
 
@@ -59,6 +64,20 @@ def carregar_entrada_json(caminho: str | Path) -> tuple[Colaborador, Periodo, li
     return parse_entrada_dict(dados)
 
 
+def carregar_politica_json(caminho: str | Path = CAMINHO_POLITICA_V4_PADRAO) -> PoliticaReembolso:
+    """Lê o arquivo externo de política (`politica-v4.json`) e retorna PoliticaReembolso (RN-004)."""
+    conteudo = Path(caminho).read_text(encoding="utf-8")
+    dados = json.loads(conteudo, parse_float=Decimal)
+    return PoliticaReembolso.de_dict(dados)
+
+
+def carregar_cambio_json(caminho: str | Path = CAMINHO_CAMBIO_PADRAO) -> TabelaCambio:
+    """Lê o arquivo externo de taxas de câmbio (`cambio.json`) e retorna TabelaCambio (RN-009)."""
+    conteudo = Path(caminho).read_text(encoding="utf-8")
+    dados = json.loads(conteudo, parse_float=Decimal)
+    return TabelaCambio.de_dict(dados)
+
+
 def _decimal_para_float_2_casas(valor: Decimal) -> float:
     """Converte Decimal quantizado em 2 casas para número JSON sem perda de representação."""
     quantizado = arredondar_moeda(valor)
@@ -66,7 +85,7 @@ def _decimal_para_float_2_casas(valor: Decimal) -> float:
 
 
 def serializar_relatorio_dict(relatorio: RelatorioReembolso) -> dict[str, Any]:
-    """Converte o RelatorioReembolso para o dicionário do schema de saída (Seção 4 da spec)."""
+    """Converte o RelatorioReembolso para o dicionário do schema de saída (Seção 4 da spec v2.0)."""
     return {
         "colaborador": {
             "id": relatorio.colaborador.id,
@@ -94,6 +113,13 @@ def serializar_relatorio_dict(relatorio: RelatorioReembolso) -> dict[str, Any]:
                 "data": r.data,
                 "categoria_original": r.categoria_original,
                 "categoria_normalizada": r.categoria_normalizada,
+                "moeda_original": r.moeda_original,
+                "valor_moeda_original": _decimal_para_float_2_casas(
+                    r.valor_moeda_original if r.valor_moeda_original is not None else r.valor_original
+                ),
+                "taxa_cambio_aplicada": (
+                    float(str(r.taxa_cambio_aplicada)) if r.taxa_cambio_aplicada is not None else None
+                ),
                 "valor_original": _decimal_para_float_2_casas(r.valor_original),
                 "valor_reembolsado": _decimal_para_float_2_casas(r.valor_reembolsado),
                 "valor_glosado": _decimal_para_float_2_casas(r.valor_glosado),
