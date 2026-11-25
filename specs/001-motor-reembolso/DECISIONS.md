@@ -10,6 +10,46 @@ Ordem cronológica inversa: a mais recente primeiro.
 
 ---
 
+## D-004 — Absorção do Envelope Lacrado (Política de Reembolso v4: Limites por Centro de Custo e Câmbio Internacional) · `2026-11-25`
+
+**Gatilho:** Recebimento do Envelope Lacrado do Dia 2 (`exemplos/Envelope/00-ENVELOPE-LACRADO.md`) acompanhado de `politica-v4.json`, `cambio.json`, `despesas-envelope.json` e `despesas-envelope-cc-desconhecido.json`.
+
+**O que mudou na spec (`spec.md` v1.2 → v2.0):**
+1. **Fora de escopo (Seção 3) e O que fica em aberto (Seção 10):**
+   - Removida a restrição contra conversão de moedas estrangeiras (agora parte obrigatória do Item B).
+   - Declarado explicitamente fora de escopo o Item C opcional ("Fila de aprovação manual acima de R$ 500"), inclusive porque o maior teto diário possível em `politica-v4.json` é R$ 400,00 (`hospedagem` em `CC-COMERCIAL`).
+2. **Contrato de Entrada e Saída (Seção 4):**
+   - Adicionado o campo opcional `moeda` (ISO 4217, padrão `"BRL"`) em `despesas[]` e os documentos externos `politica-v4.json` e `cambio.json`.
+   - Adicionados em `resultados[]` os campos `moeda_original`, `valor_moeda_original` e `taxa_cambio_aplicada`, além dos novos códigos de motivo `MOEDA_NAO_SUPORTADA` e `CAMBIO_INDISPONIVEL`.
+3. **Regras de Negócio alteradas e criadas:**
+   - **`RN-001`:** Passa a normalizar também o campo `moeda` (`"BRL"` quando omitido, uppercase).
+   - **`RN-004` (De lista fixa de 3 categorias → Para tabela externa por Centro de Custo):** Resolve a tabela de `colaborador.centro_custo` em `politica-v4.json` (ou fallback para `padrao` se o CC não estiver cadastrado). Categorias ausentes da tabela do CC ou com `limite <= 0.00` (ex.: `hospedagem` em `CC-ENG-PLATAFORMA`) são recusadas com `CATEGORIA_NAO_REEMBOLSAVEL`.
+   - **`RN-005`:** Especificado que a comparação `> 100.00` para exigência de nota fiscal incide sobre o valor já convertido para `BRL` (`valor_original`).
+   - **`RN-006`:** A chave de duplicidade passa a incluir `moeda_original` e `valor_moeda_original`.
+   - **`RN-007`:** Além de flag `em_viagem` e datas `D`/`D+1` de `hospedagem` válida, qualquer despesa válida em moeda estrangeira (`moeda_original != "BRL"`) ativa o regime de viagem na sua `data`. O bônus de +50% continua aplicando-se às categorias cotidianas (`alimentacao` e `transporte_urbano`), mantendo `hospedagem` e `representacao` em seus tetos próprios da tabela.
+   - **`RN-009` (Nova):** Conversão cambial para `BRL` usando a taxa da data da despesa em `cambio.json`, com fallback para o último dia útil bancário anterior (`data_cotacao <= data`) em finais de semana/feriados e recusa com `MOEDA_NAO_SUPORTADA` quando a moeda não existir na tabela (ex.: `GBP`).
+4. **Novas Ambiguidades Resolvidas (`AMB-011` a `AMB-016`) e Critérios de Aceite (`CA-001` atualizado para v4, `CA-009` e `CA-010` criados):**
+   - `AMB-011`: Fallback de cotação em sábado (`e-004` em `18/07` usa cotação de sexta `17/07`).
+   - `AMB-012`: Moeda não cadastrada (`e-006` em `GBP` → `MOEDA_NAO_SUPORTADA`).
+   - `AMB-013`: Nota fiscal avaliada sobre o valor convertido em `BRL` (`e-005`: `40 USD = R$ 220` sem NF → `SEM_NOTA_FISCAL`).
+   - `AMB-014`: Fallback para `padrao` apenas quando o CC não existe na tabela (`CC-SUPORTE-N2`), e `limite: 0.00` em `CC-ENG-PLATAFORMA` tratado como `CATEGORIA_NAO_REEMBOLSAVEL`.
+   - `AMB-015`: Moeda estrangeira válida ativa regime de viagem na data `D`; `representacao` mantém teto fixo de R$ 300,00.
+   - `AMB-016`: Vigência retroativa da Política v4 sobre `exemplos/despesas-exemplo.json` (`CC-ENG-PLATAFORMA`).
+
+**Por quê:** Exigência obrigatória do Envelope Lacrado do Dia 2 (Política de Reembolso v4 com vigência imediata e retroativa à competência `2026-07`).
+
+**O que isso invalidou:**
+- Os limites fixos em código da Política v3 (`src/policy.py` precisa carregar `politica-v4.json` e resolver por `centro_custo`).
+- O critério `CA-001` sob a v3 para `CC-ENG-PLATAFORMA` (que agora tem `alimentacao` = R$ 75,00 e `hospedagem` não reembolsável sob a v4).
+
+**Tasks afetadas:**
+- Tasks antigas `T-001` a `T-007` permanecem no histórico como Fase 1 a 4.
+- Criadas na **Fase 5 — Envelope** em `tasks.md`: `T-008`, `T-009`, `T-010` e `T-011`.
+
+**Custo:** 4 arquivos de documentação atualizados antes do código (`spec.md`, `DECISIONS.md`, `plan.md`, `tasks.md`), seguidos da implementação cirúrgica em `src/` e `tests/`.
+
+---
+
 ## D-003 — Correção de erro aritmético de soma manual do agente no critério de aceite `CA-001` · `2026-11-25`
 
 **Gatilho:** Ao executar o teste automatizado `test_ca_001_lote_referencia_despesas_exemplo` na `T-006`, o motor com `Decimal` revelou que a soma manual feita pelo agente ao redigir `CA-001` na `spec.md` estava errada (`1962.84` vs `1861.84` e contagem `4 aprovadas / 6 recusadas` vs `3 aprovadas / 7 recusadas`).
