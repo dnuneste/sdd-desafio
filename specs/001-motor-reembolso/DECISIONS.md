@@ -10,6 +10,26 @@ Ordem cronológica inversa: a mais recente primeiro.
 
 ---
 
+## D-005 — Reincidência do erro aritmético do agente nos totais agregados de `CA-001` (v4) e `CA-009` · `2026-11-25`
+
+**Gatilho:** Execução de `python -m pytest` na `T-010`. Os testes `test_ca_001_lote_referencia_despesas_exemplo` e `test_ca_009_lote_envelope_cc_comercial_e_cambio` falharam **apenas nos totais agregados** — as contagens por status e os resultados item a item estavam corretos. `CA-010` passou.
+
+**O que mudou na spec (`spec.md` v2.0, Seção 9):**
+- **`CA-001`:** `total_reembolsado` de `373.93` → **`351.43`**; `total_glosado` de `1487.91` → **`1510.41`**. Conferência: `72.50 + 2.50 + 80.00 + 54.90 + 33.33 + 47.20 + 61.00 = 351.43`.
+- **`CA-009`:** `total_solicitado` de `2517.52` → **`2457.52`**; `total_glosado` de `1283.80` → **`1223.80`**. Conferência: `340.00 + 130.46 + 85.26 + 178.80 + 220.00 + 0.00 (GBP) + 1200.00 + 95.00 + 120.00 + 88.00 = 2457.52`; glosas `40.00 + 43.80 + 220.00 + 800.00 + 120.00 = 1223.80`.
+
+**Por quê:** Nenhuma regra de negócio mudou. É a **segunda ocorrência do mesmo padrão já registrado em `D-003`**: o agente acerta a decisão de cada item, mas erra a soma mental de colunas ao redigir critérios de aceite agregados. A lição de `D-003` foi registrada no relatório, mas não virou uma salvaguarda de processo — e por isso o erro se repetiu.
+
+**O que isso invalidou:** Os totais de `CA-001` e `CA-009` em `spec.md` v2.0 (commit `3e68e54`) e as asserções correspondentes em `tests/test_edge_cases.py` e `tests/test_cli.py`.
+
+**Tasks afetadas:** `T-010`.
+
+**Custo:** 4 arquivos (`spec.md`, `DECISIONS.md`, `tests/test_edge_cases.py`, `tests/test_cli.py`), ~5 minutos.
+
+**Ação de processo:** Totais agregados de critérios de aceite passam a ser conferidos somando os valores item a item da tabela de casos de borda **antes** de congelar a spec, e não por soma mental do agente.
+
+---
+
 ## D-004 — Absorção do Envelope Lacrado (Política de Reembolso v4: Limites por Centro de Custo e Câmbio Internacional) · `2026-11-25`
 
 **Gatilho:** Recebimento do Envelope Lacrado do Dia 2 (`exemplos/Envelope/00-ENVELOPE-LACRADO.md`) acompanhado de `politica-v4.json`, `cambio.json`, `despesas-envelope.json` e `despesas-envelope-cc-desconhecido.json`.
