@@ -67,3 +67,22 @@
 
 **Usuário:**
 > Pode commitar respeitando as regras do desafio, depois vamos para os proximos passos
+
+---
+
+## Interação 4 — Revisão de Negócio da Spec v1.1 e Registro de Decisão D-002
+
+**Usuário:**
+> Vamos azer uma revisão de negócio na spec.md
+
+**Agente:**
+- Analisou o efeito da regra `RN-007` / `AMB-008` proposta na `spec.md` v1.0 (`0ba5346`).
+- Explicou a falha lógica de domínio detectada na revisão: na v1.0, uma despesa de `hospedagem` válida ativava o regime de viagem (+50%) para sua data `D` e `D + 1` e aplicava o multiplicador de +50% inclusive sobre a própria categoria `hospedagem` (elevando o limite de R$ 250,00 para R$ 375,00). Como toda hospedagem válida ativaria o regime de viagem na data `D`, o limite de R$ 250,00 do item 3 da política do RH jamais seria aplicado (tornando-se regra morta).
+- Propôs a correção para a `spec.md` v1.1 (`D-002`): manter o bônus de +50% em viagem apenas para as categorias cotidianas (`alimentacao`: R$ 60 → R$ 90; `transporte_urbano`: R$ 80 → R$ 120), preservando o teto próprio de `hospedagem` em R$ 250,00 por diária.
+
+**Usuário:**
+> Pode aplicar a revisão
+
+**Agente:**
+- Atualizou `<workspace>/specs/001-motor-reembolso/spec.md` para a versão 1.1 (`RN-007`, `RN-008`, `AMB-007`, `AMB-008`, `CA-001` e `CA-008`).
+- Registrou a entrada `D-002` em `<workspace>/specs/001-motor-reembolso/DECISIONS.md` detalhando o gatilho, o antes/depois, a justificativa de negócio e os critérios afetados.

@@ -1,6 +1,6 @@
 # Spec — Motor de Cálculo de Reembolso
 
-**Versão:** 1.0 · **Status:** aprovada · **Última alteração:** `2026-11-25`
+**Versão:** 1.1 · **Status:** aprovada · **Última alteração:** `2026-11-25`
 
 > **Regra de ouro deste arquivo:** ele descreve o QUÊ e o PORQUÊ. Nenhuma linha
 > aqui pode citar linguagem, biblioteca, classe, função ou estrutura de pasta.
@@ -177,21 +177,21 @@ Avaliar automaticamente o lote de despesas de um colaborador em um período de c
 1. O objeto `colaborador` ou a própria despesa contiver o campo booleano opcional `em_viagem: true`; **OU**
 2. A data da despesa (`data`) coincidir com uma data coberta por uma despesa de `hospedagem` válida (isto é, dentro do período de competência, com valor positivo, não duplicada e com nota fiscal quando exigida). Como o schema de entrada não possui campo estruturado de número de diárias nem data de check-out, cada lançamento válido de `hospedagem` na data `D` caracteriza regime de viagem na data `D` e no dia imediatamente seguinte `D + 1 dia` (data de check-out da estadia).
 
-Nas datas caracterizadas como em viagem, os limites diários de todas as categorias são ampliados em 50%:
+Nas datas caracterizadas como em viagem, os limites diários das despesas cotidianas (`alimentacao` e `transporte_urbano`) são ampliados em 50%, enquanto `hospedagem` mantém seu teto próprio de viagem de R$ 250,00 por diária:
 - `alimentacao`: de R$ 60,00 para **R$ 90,00 por dia**
 - `transporte_urbano`: de R$ 80,00 para **R$ 120,00 por dia**
-- `hospedagem`: de R$ 250,00 para **R$ 375,00 por dia**
+- `hospedagem`: **R$ 250,00 por diária** (não sofre acréscimo de +50% sobre si mesma, pois toda hospedagem já pressupõe viagem)
 
 O campo de saída de nível superior `em_viagem` será `true` se ao menos uma data no período tiver o regime de viagem ativado.
 **Origem:** política do RH, item 6 (`AMB-007`, `AMB-008`).
-**Aceite:** Como `d-010` (`2026-07-14`, `hospedagem`, `480.00`, `tem_nota_fiscal: true`) é uma hospedagem válida, as datas `2026-07-14` e `2026-07-15` operam com limites de viagem (+50%). Assim, `d-010` tem limite de R$ 375,00 (reembolsa `375.00`) e `d-011` (`2026-07-15`, `alimentacao`, `33.33`) é avaliada sob o limite ampliado de R$ 90,00. Já `d-013` (`2026-07-22`, `hospedagem`, `tem_nota_fiscal: false`) é inválida por falta de NF, portanto não ativa regime de viagem em `2026-07-22`.
+**Aceite:** Como `d-010` (`2026-07-14`, `hospedagem`, `480.00`, `tem_nota_fiscal: true`) é uma hospedagem válida, as datas `2026-07-14` e `2026-07-15` operam em regime de viagem. Assim, `d-010` é avaliada contra o limite de diária de hospedagem de R$ 250,00 (reembolsa `250.00`, glosa `230.00`) e `d-011` (`2026-07-15`, `alimentacao`, `33.33`) é avaliada sob o limite ampliado de alimentação em viagem de R$ 90,00. Já `d-013` (`2026-07-22`, `hospedagem`, `tem_nota_fiscal: false`) é inválida por falta de NF, portanto não ativa regime de viagem em `2026-07-22`.
 
 ### RN-008 — Limites diários por categoria e reembolso parcial por corte de excedente
 
 **Regra:** Os limites base da política são aplicados **por dia (`data`) e por categoria (`categoria_normalizada`)**, somando-se todas as despesas elegíveis daquela categoria naquela data na ordem em que aparecem na entrada:
 - `alimentacao`: **R$ 60,00 / dia** (ou **R$ 90,00 / dia** em data de viagem)
 - `transporte_urbano`: **R$ 80,00 / dia** (ou **R$ 120,00 / dia** em data de viagem)
-- `hospedagem`: **R$ 250,00 / dia** (ou **R$ 375,00 / dia** em data de viagem)
+- `hospedagem`: **R$ 250,00 / dia**
 
 Para cada despesa elegível, dado o `saldo_diario` restante daquela `(data, categoria_normalizada)`:
 1. Se `valor_original <= saldo_diario`: a despesa é integralmente aprovada (`status: "APROVADA"`, `codigo_motivo: "OK"`, `valor_reembolsado = valor_original`, `valor_glosado = 0.00`) e o `saldo_diario` diminui em `valor_original`.
@@ -256,16 +256,16 @@ Para cada despesa elegível, dado o `saldo_diario` restante daquela `(data, cate
 
 **Texto original do RH:** "3. Hospedagem tem limite de R$ 250 por diária."
 **O que não está claro:** As despesas `d-010` (`"Hotel Rio - 2 diarias"`, R$ 480,00) e `d-013` (`"Airbnb 3 noites"`, R$ 690,00) mencionam múltiplas diárias/noites apenas no texto livre `descricao`, pois o schema de entrada não possui campo `quantidade_diarias`. O sistema deve tentar fazer parsing de texto livre em `descricao` ou aplicar o teto diário da categoria `hospedagem` por data de lançamento?
-**Decisão:** O sistema não extrai números do texto livre `descricao`; cada lançamento de hospedagem é submetido ao limite diário da categoria `hospedagem` na sua respectiva `data` (R$ 250,00 base, ou R$ 375,00 quando em regime de viagem conforme RN-007).
+**Decisão:** O sistema não extrai números do texto livre `descricao`; cada lançamento de hospedagem é submetido ao limite diário da categoria `hospedagem` na sua respectiva `data` (R$ 250,00).
 **Justificativa:** Extrair regras financeiras de texto livre não estruturado ("2 diarias", "duas noites", "14 a 16/07") é frágil e vulnerável a manipulação pelo solicitante; a política financeira deve operar apenas sobre campos estruturados do contrato de entrada.
 **Regra afetada:** RN-007, RN-008
 
-### AMB-008 — Critério de ativação do regime "Colaborador em viagem" (+50% nos limites)
+### AMB-008 — Critério de ativação do regime "Colaborador em viagem" (+50% nos limites) e categorias elegíveis ao bônus
 
 **Texto original do RH:** "6. Colaborador em viagem tem limites ampliados em 50%."
-**O que não está claro:** Não existe campo `em_viagem` em `exemplos/despesas-exemplo.json`, mas existem despesas de hospedagem (`d-010` em `2026-07-14` e `d-011` café da manhã no mesmo hotel em `2026-07-15`) e despesas ordinárias em outros dias do mês. O bônus de 50% aplica-se (a) ao mês inteiro se houver hospedagem, (b) nunca se não houver flag, ou (c) às datas associadas a uma hospedagem válida (`D` e `D + 1`)? e o bônus também amplia o teto da própria hospedagem (de R$ 250 para R$ 375)?
-**Decisão:** O regime de viagem aplica-se por data: é ativado se houver flag explícita `em_viagem: true` (no colaborador ou na despesa) OU nas datas `D` e `D + 1 dia` de qualquer despesa de `hospedagem` válida (aprovada total ou parcialmente). Nas datas em viagem, todos os três limites (`alimentacao`, `transporte_urbano` e `hospedagem`) são ampliados em 50% (R$ 90,00, R$ 120,00 e R$ 375,00).
-**Justificativa:** Um relatório mensal misto contém dias de trabalho local e dias de viagem; vincular a viagem à data da hospedagem válida (`D` e `D + 1`, cobrindo estadia e dia de check-out como em `d-010` e `d-011`) impede que uma viagem de dois dias infle o limite de alimentação do mês inteiro.
+**O que não está claro:** Não existe campo `em_viagem` em `exemplos/despesas-exemplo.json`, mas existem despesas de hospedagem (`d-010` em `2026-07-14` e `d-011` café da manhã no mesmo hotel em `2026-07-15`) e despesas ordinárias em outros dias do mês. O bônus de 50% aplica-se (a) ao mês inteiro se houver hospedagem, (b) nunca se não houver flag, ou (c) às datas associadas a uma hospedagem válida (`D` e `D + 1`)? Além disso, o bônus de +50% deve incidir sobre a própria `hospedagem` (elevando-a de R$ 250 para R$ 375) ou apenas sobre as categorias cotidianas (`alimentacao` e `transporte_urbano`)?
+**Decisão:** O regime de viagem aplica-se por data: é ativado se houver flag explícita `em_viagem: true` (no colaborador ou na despesa) OU nas datas `D` e `D + 1 dia` de qualquer despesa de `hospedagem` válida (aprovada total ou parcialmente). Nas datas em viagem, apenas os limites de `alimentacao` (R$ 60,00 → R$ 90,00) e `transporte_urbano` (R$ 80,00 → R$ 120,00) são ampliados em 50%, enquanto `hospedagem` mantém seu limite próprio de R$ 250,00 por diária.
+**Justificativa:** Toda hospedagem já ocorre em contexto de viagem; se o acréscimo de +50% incidisse sobre a própria categoria `hospedagem`, o limite de R$ 250,00 do item 3 da política jamais seria utilizado em nenhum cenário (tornando-se regra morta).
 **Regra afetada:** RN-007
 
 ### AMB-009 — Casas decimais excedentes em valores monetários
@@ -297,7 +297,7 @@ Para cada despesa elegível, dado o `saldo_diario` restante daquela `(data, cate
 | Lançamento duplicado com IDs distintos | `d-006` e `d-007` (`2026-07-09`, `alimentacao`, R$ 54,90) | `d-006` é `APROVADA` (R$ 54,90); `d-007` é `RECUSADA` por `DESPESA_DUPLICADA` (R$ 0,00) e não consome os R$ 5,10 restantes do dia | RN-006, AMB-004 |
 | Despesa fora do período de competência | `d-008` (`2026-04-15` em período `2026-07-01`..`2026-07-31`) | `RECUSADA` por `FORA_PERIODO_COMPETENCIA` (reembolsa R$ 0,00, glosa R$ 41,00) | RN-003, AMB-005 |
 | Estorno / valor negativo | `d-009` (`transporte_urbano`, R$ -45,00) | `RECUSADA` por `VALOR_INVALIDO` (`valor_reembolsado: 0.00`, `valor_glosado: 0.00`, não entra no `total_solicitado`) | RN-002, AMB-006 |
-| Hospedagem válida ativando regime de viagem em `D` e `D+1` | `d-010` (`2026-07-14`, `hospedagem`, R$ 480,00, NF `true`) e `d-011` (`2026-07-15`, `alimentacao`, R$ 33,333) | `2026-07-14` e `2026-07-15` ficam em viagem (+50%): `d-010` é `APROVADA_PARCIALMENTE` com teto de R$ 375,00 (glosa R$ 105,00); `d-011` é arredondada para R$ 33,33 e `APROVADA` (teto do dia R$ 90,00) | RN-001, RN-007, RN-008, AMB-007, AMB-008, AMB-009 |
+| Hospedagem válida ativando regime de viagem em `D` e `D+1` | `d-010` (`2026-07-14`, `hospedagem`, R$ 480,00, NF `true`) e `d-011` (`2026-07-15`, `alimentacao`, R$ 33,333) | `2026-07-14` e `2026-07-15` ficam em viagem: `d-010` é `APROVADA_PARCIALMENTE` com teto de hospedagem de R$ 250,00 (glosa R$ 230,00); `d-011` é arredondada para R$ 33,33 e `APROVADA` (teto do dia em viagem R$ 90,00) | RN-001, RN-007, RN-008, AMB-007, AMB-008, AMB-009 |
 | Despesa em fim de semana (sábado) | `d-012` (`2026-07-18`, `alimentacao`, R$ 47,20) | `APROVADA` integralmente (R$ 47,20) | RN-003, AMB-010 |
 | Hospedagem sem nota fiscal acima de R$ 100 | `d-013` (`2026-07-22`, `hospedagem`, R$ 690,00, NF `false`) | `RECUSADA` por `SEM_NOTA_FISCAL` (R$ 0,00) e **não** ativa regime de viagem para a data `2026-07-22` | RN-005, RN-007 |
 | Categoria em letras maiúsculas ultrapassando limite por R$ 1,00 | `d-014` (`2026-07-31`, `"ALIMENTACAO"`, R$ 61,00, NF `true`) | Normalizada para `"alimentacao"`; `APROVADA_PARCIALMENTE` (reembolsa R$ 60,00, glosa R$ 1,00) | RN-001, RN-004, RN-008, AMB-003 |
@@ -316,20 +316,20 @@ A ordem de precedência é determinística e obrigatória, pois altera o motivo 
 3. **Passo 2 — Apuração das Datas em Viagem (RN-007):**
    - Identificar todas as despesas de `hospedagem` que sobreviveram ao Passo 1; marcar suas datas `D` e `D + 1 dia` como datas em regime de viagem (além de qualquer data/colaborador com flag explícita `em_viagem: true`).
 4. **Passo 3 — Aplicação de Limites Diários e Reembolso Parcial (RN-008):**
-   - Para cada despesa que sobreviveu ao Passo 1 (na ordem original da entrada), consultar o saldo diário de `(data, categoria_normalizada)` (inicializado com o limite base ou o limite ampliado em +50% se a `data` estiver em viagem) e aprovar total (`APROVADA`), parcialmente (`APROVADA_PARCIALMENTE`) ou recusar por limite esgotado (`RECUSADA` / `LIMITE_DIARIO_EXCEDIDO`).
+   - Para cada despesa que sobreviveu ao Passo 1 (na ordem original da entrada), consultar o saldo diário de `(data, categoria_normalizada)` (inicializado com o limite base, ou com o limite ampliado em +50% para `alimentacao` e `transporte_urbano` se a `data` estiver em viagem) e aprovar total (`APROVADA`), parcialmente (`APROVADA_PARCIALMENTE`) ou recusar por limite esgotado (`RECUSADA` / `LIMITE_DIARIO_EXCEDIDO`).
 
 ## 9. Critérios de aceite
 
 O sistema está pronto quando:
 
-- [ ] **CA-001:** Ao processar `exemplos/despesas-exemplo.json`, o sistema gera um JSON válido contendo os 14 itens em `resultados` na mesma ordem da entrada, com `total_solicitado: 1962.84`, `total_reembolsado: 710.43`, `total_glosado: 1252.41`, `quantidade_aprovadas: 4`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 6`.
+- [ ] **CA-001:** Ao processar `exemplos/despesas-exemplo.json`, o sistema gera um JSON válido contendo os 14 itens em `resultados` na mesma ordem da entrada, com `total_solicitado: 1962.84`, `total_reembolsado: 585.43`, `total_glosado: 1377.41`, `quantidade_aprovadas: 4`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 6`.
 - [ ] **CA-002:** Despesas de mesma categoria e data acumulam consumo contra um único limite diário (`d-001` reembolsa `60.00` e `d-002` reembolsa `0.00`).
 - [ ] **CA-003:** Despesa de exatamente `100.00` sem nota fiscal (`d-003`) é aceita para cálculo de limite (reembolsa `80.00`), enquanto despesa de `100.01` sem nota fiscal (`d-004`) é recusada com `SEM_NOTA_FISCAL`.
 - [ ] **CA-004:** Categorias são tratadas de forma case-insensitive (`d-014` `"ALIMENTACAO"` é processada como `"alimentacao"` e reembolsa `60.00`) e categorias fora da lista (`d-005` `"coworking"`) são recusadas com `CATEGORIA_NAO_REEMBOLSAVEL`.
 - [ ] **CA-005:** Despesas duplicadas (`d-007` idêntica a `d-006` exceto pelo `id`) são recusadas com `DESPESA_DUPLICADA` e não consomem saldo diário.
 - [ ] **CA-006:** Despesas fora do intervalo `[periodo.inicio, periodo.fim]` (`d-008`) são recusadas com `FORA_PERIODO_COMPETENCIA`, enquanto despesas em sábado dentro do intervalo (`d-012`) são aprovadas.
 - [ ] **CA-007:** Despesas com valor negativo ou zero (`d-009`, `-45.00`) são recusadas com `VALOR_INVALIDO`, não entram no `total_solicitado` e não alteram saldos diários.
-- [ ] **CA-008:** Hospedagem válida (`d-010` em `2026-07-14`) ativa regime de viagem (+50%) para `2026-07-14` e `2026-07-15`, permitindo reembolso de `375.00` em `d-010` e avaliando `d-011` (`33.33`) sob o teto de `90.00`; hospedagem recusada por falta de NF (`d-013`) não ativa regime de viagem.
+- [ ] **CA-008:** Hospedagem válida (`d-010` em `2026-07-14`) é limitada a `250.00` e ativa regime de viagem (+50% nas categorias cotidianas) para `2026-07-14` e `2026-07-15`, avaliando `d-011` (`33.33`) sob o teto ampliado de `90.00`; hospedagem recusada por falta de NF (`d-013`) não ativa regime de viagem.
 
 ## 10. O que fica em aberto
 
