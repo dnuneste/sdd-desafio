@@ -41,10 +41,10 @@
 
 ## Fase 3 — Casos de borda
 
-- [ ] **T-006** — Adicionar suíte completa de testes dos casos de borda da Seção 7 da spec e validar lote de referência `exemplos/despesas-exemplo.json` (`tests/test_edge_cases.py`)
+- [x] **T-006** — Adicionar suíte completa de testes dos casos de borda da Seção 7 da spec e validar lote de referência `exemplos/despesas-exemplo.json` (`tests/test_edge_cases.py`)
   - **Atende:** CA-001 a CA-008, RN-001 a RN-008, AMB-001 a AMB-010
   - **Aceite:** `tests/test_edge_cases.py::test_ca_001_lote_referencia_despesas_exemplo` e todos os testes de borda em `tests/test_edge_cases.py` passam
-  - **Commit:** `<pendente>`
+  - **Commit:** `test(T-006)`
 
 ## Fase 4 — Saída e CLI
 
