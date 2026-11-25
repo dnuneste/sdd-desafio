@@ -12,10 +12,10 @@
 
 ## Fase 1 — Fundação
 
-- [ ] **T-001** — Estruturar modelos de domínio, parâmetros da política e normalização monetária/textual de entrada (`src/models.py`, `src/policy.py`)
+- [x] **T-001** — Estruturar modelos de domínio, parâmetros da política e normalização monetária/textual de entrada (`src/models.py`, `src/policy.py`)
   - **Atende:** RN-001, AMB-003, AMB-009
   - **Aceite:** `tests/test_engine.py::test_rn_001_amb_009_arredondamento_half_up` e `tests/test_engine.py::test_rn_001_amb_003_normalizacao_categoria` passam
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-001)`
 
 - [ ] **T-002** — Implementar parser de entrada JSON e serializador de saída JSON com precisão `Decimal` (`src/io_handler.py`)
   - **Atende:** RN-001, AMB-009 (Seção 4 da spec — Contrato de Entrada e Saída)
