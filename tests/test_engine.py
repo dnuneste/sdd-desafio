@@ -484,3 +484,108 @@ def test_rn_009_amb_011_amb_012_tabela_cambio_e_fallback_fim_de_semana() -> None
     taxa_antiga, erro_antiga = cambio.obter_taxa(date(2026, 7, 1), "USD")
     assert taxa_antiga is None
     assert erro_antiga == "CAMBIO_INDISPONIVEL"
+
+
+def test_rn_005_rn_009_amb_013_nota_fiscal_apos_conversao_cambial() -> None:
+    """Verifica que a obrigatoriedade de nota fiscal (> R$ 100,00) é avaliada sobre o valor convertido em BRL (T-009, RN-005, RN-009, AMB-013)."""
+    from datetime import date
+    from src.engine import avaliar_relatorio
+    from src.io_handler import carregar_cambio_json, carregar_politica_json
+    from src.models import CodigoMotivo, Colaborador, Periodo, StatusDespesa
+
+    politica = carregar_politica_json("exemplos/Envelope/politica-v4.json")
+    cambio = carregar_cambio_json("exemplos/Envelope/cambio.json")
+    colaborador = Colaborador(id="c-0912", nome="Rafael Nkemelu", centro_custo="CC-COMERCIAL")
+    periodo = Periodo(competencia="2026-07", inicio=date(2026, 7, 1), fim=date(2026, 7, 31))
+
+    despesas = [
+        # e-003: 14.50 EUR em 2026-07-15 (taxa 5.88) = R$ 85.26 <= 100.00 -> isenta de NF
+        DespesaInput.criar(
+            id="e-003",
+            data="2026-07-15",
+            categoria="alimentacao",
+            descricao="Cafe e sanduiche",
+            fornecedor="Padaria Lisboa",
+            valor=Decimal("14.50"),
+            moeda="EUR",
+            tem_nota_fiscal=False,
+        ),
+        # e-005: 40.00 USD em 2026-07-20 (taxa 5.50) = R$ 220.00 > 100.00 -> exige NF, logo RECUSADA
+        DespesaInput.criar(
+            id="e-005",
+            data="2026-07-20",
+            categoria="transporte_urbano",
+            descricao="Corridas do dia",
+            fornecedor="Bolt",
+            valor=Decimal("40.00"),
+            moeda="USD",
+            tem_nota_fiscal=False,
+        ),
+    ]
+
+    relatorio = avaliar_relatorio(colaborador, periodo, despesas, politica=politica, cambio=cambio)
+    r_e003, r_e005 = relatorio.resultados
+
+    assert r_e003.status == StatusDespesa.APROVADA
+    assert r_e003.codigo_motivo == CodigoMotivo.OK
+    assert r_e003.valor_original == Decimal("85.26")
+    assert r_e003.valor_reembolsado == Decimal("85.26")
+
+    assert r_e005.status == StatusDespesa.RECUSADA
+    assert r_e005.codigo_motivo == CodigoMotivo.SEM_NOTA_FISCAL
+    assert r_e005.valor_original == Decimal("220.00")
+    assert r_e005.valor_reembolsado == Decimal("0.00")
+    assert r_e005.valor_glosado == Decimal("220.00")
+
+
+def test_rn_007_amb_015_moeda_estrangeira_ativa_viagem() -> None:
+    """Verifica que despesa válida em moeda estrangeira ativa o regime de viagem (+50% em alimentacao) na data D (T-009, RN-007, AMB-015)."""
+    from datetime import date
+    from src.engine import avaliar_relatorio
+    from src.io_handler import carregar_cambio_json, carregar_politica_json
+    from src.models import CodigoMotivo, Colaborador, Periodo, StatusDespesa
+
+    politica = carregar_politica_json("exemplos/Envelope/politica-v4.json")
+    cambio = carregar_cambio_json("exemplos/Envelope/cambio.json")
+    colaborador = Colaborador(id="c-0912", nome="Rafael Nkemelu", centro_custo="CC-COMERCIAL")
+    periodo = Periodo(competencia="2026-07", inicio=date(2026, 7, 1), fim=date(2026, 7, 31))
+
+    # Em CC-COMERCIAL, alimentacao base é R$ 90.00 e em viagem (+50%) é R$ 135.00
+    despesas = [
+        # e-002: 22.00 EUR em 2026-07-14 (taxa 5.93) = R$ 130.46 -> APROVADA porque 130.46 <= 135.00
+        DespesaInput.criar(
+            id="e-002",
+            data="2026-07-14",
+            categoria="alimentacao",
+            descricao="Almoco - Lisboa",
+            fornecedor="Taberna do Chiado",
+            valor=Decimal("22.00"),
+            moeda="EUR",
+            tem_nota_fiscal=True,
+        ),
+        # e-004: 30.00 EUR no sábado 2026-07-18 (taxa sexta 17/07 = 5.96) = R$ 178.80 -> APROVADA_PARCIALMENTE (135.00)
+        DespesaInput.criar(
+            id="e-004",
+            data="2026-07-18",
+            categoria="alimentacao",
+            descricao="Jantar de sabado",
+            fornecedor="Cervejaria Ramiro",
+            valor=Decimal("30.00"),
+            moeda="EUR",
+            tem_nota_fiscal=True,
+        ),
+    ]
+
+    relatorio = avaliar_relatorio(colaborador, periodo, despesas, politica=politica, cambio=cambio)
+    assert relatorio.em_viagem is True
+
+    r_e002, r_e004 = relatorio.resultados
+    assert r_e002.status == StatusDespesa.APROVADA
+    assert r_e002.valor_original == Decimal("130.46")
+    assert r_e002.valor_reembolsado == Decimal("130.46")
+
+    assert r_e004.status == StatusDespesa.APROVADA_PARCIALMENTE
+    assert r_e004.codigo_motivo == CodigoMotivo.LIMITE_DIARIO_EXCEDIDO
+    assert r_e004.valor_original == Decimal("178.80")
+    assert r_e004.valor_reembolsado == Decimal("135.00")
+    assert r_e004.valor_glosado == Decimal("43.80")
