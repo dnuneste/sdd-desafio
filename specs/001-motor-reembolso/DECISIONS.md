@@ -10,33 +10,16 @@ Ordem cronológica inversa: a mais recente primeiro.
 
 ---
 
-## D-002 — <título curto> · `<data>`
+## D-001 — Consolidação inicial da Spec v1.0 e resolução das 10 ambiguidades da política v3 · `2026-11-25`
 
-**Gatilho:** <o que provocou: envelope lacrado / erro descoberto na implementação /
-ambiguidade que só apareceu ao testar / o Claude apontou uma contradição>
+**Gatilho:** Análise cruzada entre a "Política de Reembolso de Despesas — v3" enviada pelo RH e os 14 itens do arquivo `exemplos/despesas-exemplo.json` antes do início da implementação.
 
-**O que mudou na spec:** <de → para, citando o ID da regra>
+**O que mudou na spec:** Criação das regras `RN-001` a `RN-008`, definição da ordem estrita de precedência (Seção 8), contrato de entrada/saída (Seção 4) e formalização das decisões para as 10 ambiguidades (`AMB-001` a `AMB-010`).
 
-**Por quê:**
+**Por quê:** A política textual do RH omitia a unidade de aplicação (teto cumulativo diário vs. individual), fronteiras numéricas (`> 100.00` vs `>= 100.00`, arredondamento de 3 casas decimais, valores negativos/estornos) e dados ausentes no JSON (`em_viagem` e `quantidade_diarias`).
 
-**O que isso invalidou:** <requisitos, decisões técnicas, testes que caíram>
+**O que isso invalidou:** O esqueleto inicial em branco de `spec.md`.
 
-**Tasks afetadas:** <as que precisaram ser refeitas + as novas criadas>
+**Tasks afetadas:** Criadas `T-001` a `T-007` em `specs/001-motor-reembolso/tasks.md`.
 
-**Custo:** <quantos arquivos tocados, quanto tempo>
-
----
-
-## D-001 — <título curto> · `<data>`
-
-**Gatilho:**
-
-**O que mudou na spec:**
-
-**Por quê:**
-
-**O que isso invalidou:**
-
-**Tasks afetadas:**
-
-**Custo:**
+**Custo:** 1 arquivo de especificação (`spec.md`), 0 linhas de código alteradas (decisão tomada na fase de especificação, antes da escrita de código).
