@@ -116,3 +116,79 @@ def test_rn_001_io_parsing_e_serializacao_json(tmp_path) -> None:
     arquivo_saida = tmp_path / "saida_teste.json"
     salvar_saida_json(relatorio, arquivo_saida)
     assert arquivo_saida.exists()
+
+
+def test_rn_002_amb_006_recusa_valor_negativo_ou_zero() -> None:
+    """Verifica recusa de estornos/valores negativos e zero sem glosa positiva (RN-002, AMB-006)."""
+    from src.engine import validar_valor_positivo
+    from src.models import CodigoMotivo, StatusDespesa
+
+    estorno = DespesaInput.criar(
+        id="d-009",
+        data="2026-07-11",
+        categoria="transporte_urbano",
+        descricao="Estorno de corrida cancelada",
+        fornecedor="TaxiApp",
+        valor=Decimal("-45.00"),
+        tem_nota_fiscal=False,
+    )
+    res_estorno = validar_valor_positivo(estorno)
+    assert res_estorno is not None
+    assert res_estorno.status == StatusDespesa.RECUSADA
+    assert res_estorno.codigo_motivo == CodigoMotivo.VALOR_INVALIDO
+    assert res_estorno.valor_reembolsado == Decimal("0.00")
+    assert res_estorno.valor_glosado == Decimal("0.00")
+
+    zero = DespesaInput.criar(
+        id="d-zero",
+        data="2026-07-11",
+        categoria="alimentacao",
+        descricao="Cortesia",
+        fornecedor="Bistro",
+        valor=Decimal("0.00"),
+        tem_nota_fiscal=True,
+    )
+    res_zero = validar_valor_positivo(zero)
+    assert res_zero is not None
+    assert res_zero.status == StatusDespesa.RECUSADA
+    assert res_zero.codigo_motivo == CodigoMotivo.VALOR_INVALIDO
+
+
+def test_rn_003_amb_005_amb_010_periodo_competencia_e_fim_de_semana() -> None:
+    """Verifica recusa fora do período [inicio, fim] e permissão em sábado dentro do período (RN-003, AMB-005, AMB-010)."""
+    from datetime import date
+    from src.engine import validar_periodo_competencia
+    from src.models import CodigoMotivo, Periodo, StatusDespesa
+
+    periodo = Periodo(
+        competencia="2026-07",
+        inicio=date(2026, 7, 1),
+        fim=date(2026, 7, 31),
+    )
+
+    fora = DespesaInput.criar(
+        id="d-008",
+        data="2026-04-15",
+        categoria="alimentacao",
+        descricao="Almoco de abril lancado com atraso",
+        fornecedor="Restaurante Tavola",
+        valor=Decimal("41.00"),
+        tem_nota_fiscal=True,
+    )
+    res_fora = validar_periodo_competencia(fora, periodo)
+    assert res_fora is not None
+    assert res_fora.status == StatusDespesa.RECUSADA
+    assert res_fora.codigo_motivo == CodigoMotivo.FORA_PERIODO_COMPETENCIA
+    assert res_fora.valor_reembolsado == Decimal("0.00")
+    assert res_fora.valor_glosado == Decimal("41.00")
+
+    sabado = DespesaInput.criar(
+        id="d-012",
+        data="2026-07-18",
+        categoria="alimentacao",
+        descricao="Almoco de sabado - plantao",
+        fornecedor="Padaria Uniao",
+        valor=Decimal("47.20"),
+        tem_nota_fiscal=True,
+    )
+    assert validar_periodo_competencia(sabado, periodo) is None

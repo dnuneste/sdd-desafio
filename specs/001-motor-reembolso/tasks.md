@@ -24,10 +24,10 @@
 
 ## Fase 2 — Regras de negócio
 
-- [ ] **T-003** — Implementar validação de valores não positivos / estornos e período de competência (`src/engine.py`)
+- [x] **T-003** — Implementar validação de valores não positivos / estornos e período de competência (`src/engine.py`)
   - **Atende:** RN-002, RN-003, AMB-005, AMB-006, AMB-010, CA-006, CA-007
   - **Aceite:** `tests/test_engine.py::test_rn_002_amb_006_recusa_valor_negativo_ou_zero` e `tests/test_engine.py::test_rn_003_amb_005_amb_010_periodo_competencia_e_fim_de_semana` passam
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-003)`
 
 - [ ] **T-004** — Implementar validação de categorias elegíveis, detecção de duplicatas e exigência de nota fiscal acima de R$ 100,00 (`src/engine.py`)
   - **Atende:** RN-004, RN-005, RN-006, AMB-002, AMB-003, AMB-004, CA-003, CA-004, CA-005
