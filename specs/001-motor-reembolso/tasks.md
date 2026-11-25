@@ -67,10 +67,10 @@
   - **Aceite:** `tests/test_engine.py::test_rn_005_rn_009_amb_013_nota_fiscal_apos_conversao_cambial` e `tests/test_engine.py::test_rn_007_amb_015_moeda_estrangeira_ativa_viagem` passam
   - **Commit:** `feat(T-009)`
 
-- [ ] **T-010** — Validar lotes do envelope (`despesas-envelope.json`, `despesas-envelope-cc-desconhecido.json`) e vigência retroativa em `despesas-exemplo.json` (`tests/test_edge_cases.py`, `src/cli.py`, `tests/test_cli.py`, `README.md`)
+- [x] **T-010** — Validar lotes do envelope (`despesas-envelope.json`, `despesas-envelope-cc-desconhecido.json`) e vigência retroativa em `despesas-exemplo.json` (`tests/test_edge_cases.py`, `src/cli.py`, `tests/test_cli.py`, `README.md`)
   - **Atende:** CA-001, CA-008, CA-009, CA-010, AMB-016
   - **Aceite:** `tests/test_edge_cases.py::test_ca_001_lote_referencia_despesas_exemplo`, `tests/test_edge_cases.py::test_ca_009_lote_envelope_cc_comercial_e_cambio` e `tests/test_edge_cases.py::test_ca_010_lote_envelope_cc_desconhecido_fallback_padrao` passam
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-010)` (precedido da correção de spec `D-005`)
 
 ---
 
