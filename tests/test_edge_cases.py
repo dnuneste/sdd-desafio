@@ -23,13 +23,13 @@ def test_ca_001_lote_referencia_despesas_exemplo() -> None:
 
     assert relatorio.em_viagem is True
     assert relatorio.resumo.quantidade_despesas == 14
-    assert relatorio.resumo.quantidade_aprovadas == 4
+    assert relatorio.resumo.quantidade_aprovadas == 3
     assert relatorio.resumo.quantidade_aprovadas_parcialmente == 4
-    assert relatorio.resumo.quantidade_recusadas == 6
+    assert relatorio.resumo.quantidade_recusadas == 7
 
-    assert relatorio.resumo.total_solicitado == Decimal("1962.84")
+    assert relatorio.resumo.total_solicitado == Decimal("1861.84")
     assert relatorio.resumo.total_reembolsado == Decimal("585.43")
-    assert relatorio.resumo.total_glosado == Decimal("1377.41")
+    assert relatorio.resumo.total_glosado == Decimal("1276.41")
 
     esperado = {
         "d-001": (StatusDespesa.APROVADA_PARCIALMENTE, CodigoMotivo.LIMITE_DIARIO_EXCEDIDO, Decimal("60.00"), Decimal("12.50")),

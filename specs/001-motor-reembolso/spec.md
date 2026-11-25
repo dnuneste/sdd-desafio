@@ -1,6 +1,6 @@
 # Spec — Motor de Cálculo de Reembolso
 
-**Versão:** 1.1 · **Status:** aprovada · **Última alteração:** `2026-11-25`
+**Versão:** 1.2 · **Status:** aprovada · **Última alteração:** `2026-11-25`
 
 > **Regra de ouro deste arquivo:** ele descreve o QUÊ e o PORQUÊ. Nenhuma linha
 > aqui pode citar linguagem, biblioteca, classe, função ou estrutura de pasta.
@@ -322,7 +322,7 @@ A ordem de precedência é determinística e obrigatória, pois altera o motivo 
 
 O sistema está pronto quando:
 
-- [ ] **CA-001:** Ao processar `exemplos/despesas-exemplo.json`, o sistema gera um JSON válido contendo os 14 itens em `resultados` na mesma ordem da entrada, com `total_solicitado: 1962.84`, `total_reembolsado: 585.43`, `total_glosado: 1377.41`, `quantidade_aprovadas: 4`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 6`.
+- [ ] **CA-001:** Ao processar `exemplos/despesas-exemplo.json`, o sistema gera um JSON válido contendo os 14 itens em `resultados` na mesma ordem da entrada, com `total_solicitado: 1861.84`, `total_reembolsado: 585.43`, `total_glosado: 1276.41`, `quantidade_aprovadas: 3`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 7`.
 - [ ] **CA-002:** Despesas de mesma categoria e data acumulam consumo contra um único limite diário (`d-001` reembolsa `60.00` e `d-002` reembolsa `0.00`).
 - [ ] **CA-003:** Despesa de exatamente `100.00` sem nota fiscal (`d-003`) é aceita para cálculo de limite (reembolsa `80.00`), enquanto despesa de `100.01` sem nota fiscal (`d-004`) é recusada com `SEM_NOTA_FISCAL`.
 - [ ] **CA-004:** Categorias são tratadas de forma case-insensitive (`d-014` `"ALIMENTACAO"` é processada como `"alimentacao"` e reembolsa `60.00`) e categorias fora da lista (`d-005` `"coworking"`) são recusadas com `CATEGORIA_NAO_REEMBOLSAVEL`.

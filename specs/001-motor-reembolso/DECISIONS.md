@@ -10,6 +10,25 @@ Ordem cronológica inversa: a mais recente primeiro.
 
 ---
 
+## D-003 — Correção de erro aritmético de soma manual do agente no critério de aceite `CA-001` · `2026-11-25`
+
+**Gatilho:** Ao executar o teste automatizado `test_ca_001_lote_referencia_despesas_exemplo` na `T-006`, o motor com `Decimal` revelou que a soma manual feita pelo agente ao redigir `CA-001` na `spec.md` estava errada (`1962.84` vs `1861.84` e contagem `4 aprovadas / 6 recusadas` vs `3 aprovadas / 7 recusadas`).
+
+**O que mudou na spec:**
+- **`CA-001` (Seção 9 da `spec.md`, v1.2):**
+  - **De:** `total_solicitado: 1962.84`, `total_reembolsado: 585.43`, `total_glosado: 1377.41`, `quantidade_aprovadas: 4`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 6`.
+  - **Para:** `total_solicitado: 1861.84`, `total_reembolsado: 585.43`, `total_glosado: 1276.41`, `quantidade_aprovadas: 3`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 7`.
+
+**Por quê:** As 13 despesas positivas de `exemplos/despesas-exemplo.json` somam exatamente `72.50 + 38.00 + 100.00 + 100.01 + 89.00 + 54.90 + 54.90 + 41.00 + 480.00 + 33.33 + 47.20 + 690.00 + 61.00 = 1861.84`. Além disso, as despesas integralmente aprovadas são 3 (`d-006`, `d-011`, `d-012`), as parcialmente aprovadas são 4 (`d-001`, `d-003`, `d-010`, `d-014`) e as recusadas são 7 (`d-002`, `d-004`, `d-005`, `d-007`, `d-008`, `d-009`, `d-013`). Nenhuma regra de negócio (`RN-001`..`RN-008`) mudou; o erro estava na aritmética mental do agente ao escrever `CA-001`.
+
+**O que isso invalidou:** Os números agregados esperados em `CA-001` na `spec.md` v1.1 e na asserção inicial de `tests/test_edge_cases.py`.
+
+**Tasks afetadas:** `T-006` (`tests/test_edge_cases.py`).
+
+**Custo:** 3 arquivos tocados (`spec.md`, `DECISIONS.md`, `tests/test_edge_cases.py`), ~3 minutos.
+
+---
+
 ## D-002 — Correção da incidência do bônus de viagem (+50%) sobre a categoria `hospedagem` · `2026-11-25`
 
 **Gatilho:** Revisão humana de negócio sobre a `spec.md` v1.0 (`0ba5346`) antes do início da implementação. Identificou-se uma contradição lógica na proposta inicial do agente para `RN-007` e `AMB-008`.
