@@ -297,3 +297,128 @@ def test_rn_006_amb_004_deteccao_duplicatas() -> None:
     assert res_d007.codigo_motivo == CodigoMotivo.DESPESA_DUPLICADA
     assert res_d007.valor_reembolsado == Decimal("0.00")
     assert res_d007.valor_glosado == Decimal("54.90")
+
+
+def test_rn_007_amb_007_amb_008_regime_viagem_hospedagem_valida() -> None:
+    """Verifica ativação do regime de viagem em D e D+1 por hospedagem válida e manutenção do teto de R$ 250 para hospedagem (RN-007, AMB-007, AMB-008, D-002)."""
+    from datetime import date
+    from src.engine import avaliar_relatorio
+    from src.models import CodigoMotivo, Colaborador, Periodo, StatusDespesa
+
+    colaborador = Colaborador(id="c-0417", nome="Marina Volpi", centro_custo="CC-ENG-PLATAFORMA")
+    periodo = Periodo(competencia="2026-07", inicio=date(2026, 7, 1), fim=date(2026, 7, 31))
+
+    despesas = [
+        DespesaInput.criar(
+            id="d-010",
+            data="2026-07-14",
+            categoria="hospedagem",
+            descricao="Hotel Rio - 2 diarias",
+            fornecedor="Hotel Copa Sul",
+            valor=Decimal("480.00"),
+            tem_nota_fiscal=True,
+        ),
+        DespesaInput.criar(
+            id="d-011",
+            data="2026-07-15",
+            categoria="alimentacao",
+            descricao="Cafe da manha hotel",
+            fornecedor="Hotel Copa Sul",
+            valor=Decimal("85.00"),
+            tem_nota_fiscal=True,
+        ),
+        DespesaInput.criar(
+            id="d-013",
+            data="2026-07-22",
+            categoria="hospedagem",
+            descricao="Airbnb 3 noites",
+            fornecedor="Airbnb",
+            valor=Decimal("690.00"),
+            tem_nota_fiscal=False,
+        ),
+        DespesaInput.criar(
+            id="d-alim-22",
+            data="2026-07-22",
+            categoria="alimentacao",
+            descricao="Jantar no dia do Airbnb sem NF",
+            fornecedor="Restaurante",
+            valor=Decimal("75.00"),
+            tem_nota_fiscal=True,
+        ),
+    ]
+
+    relatorio = avaliar_relatorio(colaborador, periodo, despesas)
+    assert relatorio.em_viagem is True
+
+    # d-010 (hospedagem válida): teto R$ 250.00 (D-002)
+    r_d010 = relatorio.resultados[0]
+    assert r_d010.status == StatusDespesa.APROVADA_PARCIALMENTE
+    assert r_d010.codigo_motivo == CodigoMotivo.LIMITE_DIARIO_EXCEDIDO
+    assert r_d010.valor_reembolsado == Decimal("250.00")
+    assert r_d010.valor_glosado == Decimal("230.00")
+
+    # d-011 em D+1 (2026-07-15): alimentação com limite ampliado em +50% (R$ 90.00), logo R$ 85.00 é APROVADA
+    r_d011 = relatorio.resultados[1]
+    assert r_d011.status == StatusDespesa.APROVADA
+    assert r_d011.codigo_motivo == CodigoMotivo.OK
+    assert r_d011.valor_reembolsado == Decimal("85.00")
+
+    # d-013 (hospedagem sem NF acima de R$ 100): RECUSADA por SEM_NOTA_FISCAL e NÃO ativa viagem em 2026-07-22
+    r_d013 = relatorio.resultados[2]
+    assert r_d013.status == StatusDespesa.RECUSADA
+    assert r_d013.codigo_motivo == CodigoMotivo.SEM_NOTA_FISCAL
+
+    # d-alim-22 em 2026-07-22 opera no limite normal de R$ 60.00 (não R$ 90.00)
+    r_alim22 = relatorio.resultados[3]
+    assert r_alim22.status == StatusDespesa.APROVADA_PARCIALMENTE
+    assert r_alim22.valor_reembolsado == Decimal("60.00")
+    assert r_alim22.valor_glosado == Decimal("15.00")
+
+
+def test_rn_008_amb_001_limite_diario_cumulativo_e_reembolso_parcial() -> None:
+    """Verifica consumo cumulativo do saldo diário na mesma data e categoria (RN-008, AMB-001)."""
+    from datetime import date
+    from src.engine import avaliar_relatorio
+    from src.models import CodigoMotivo, Colaborador, Periodo, StatusDespesa
+
+    colaborador = Colaborador(id="c-0417", nome="Marina Volpi", centro_custo="CC-ENG-PLATAFORMA")
+    periodo = Periodo(competencia="2026-07", inicio=date(2026, 7, 1), fim=date(2026, 7, 31))
+
+    despesas = [
+        DespesaInput.criar(
+            id="d-001",
+            data="2026-07-03",
+            categoria="alimentacao",
+            descricao="Almoco com cliente",
+            fornecedor="Restaurante Tavola",
+            valor=Decimal("72.50"),
+            tem_nota_fiscal=True,
+        ),
+        DespesaInput.criar(
+            id="d-002",
+            data="2026-07-03",
+            categoria="alimentacao",
+            descricao="Jantar apos reuniao",
+            fornecedor="Cantina do Porto",
+            valor=Decimal("38.00"),
+            tem_nota_fiscal=True,
+        ),
+    ]
+
+    relatorio = avaliar_relatorio(colaborador, periodo, despesas)
+    assert relatorio.em_viagem is False
+
+    r1, r2 = relatorio.resultados
+    assert r1.status == StatusDespesa.APROVADA_PARCIALMENTE
+    assert r1.codigo_motivo == CodigoMotivo.LIMITE_DIARIO_EXCEDIDO
+    assert r1.valor_reembolsado == Decimal("60.00")
+    assert r1.valor_glosado == Decimal("12.50")
+
+    assert r2.status == StatusDespesa.RECUSADA
+    assert r2.codigo_motivo == CodigoMotivo.LIMITE_DIARIO_EXCEDIDO
+    assert r2.valor_reembolsado == Decimal("0.00")
+    assert r2.valor_glosado == Decimal("38.00")
+
+    assert relatorio.resumo.total_solicitado == Decimal("110.50")
+    assert relatorio.resumo.total_reembolsado == Decimal("60.00")
+    assert relatorio.resumo.total_glosado == Decimal("50.50")

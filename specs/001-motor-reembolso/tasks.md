@@ -34,10 +34,10 @@
   - **Aceite:** `tests/test_engine.py::test_rn_004_amb_003_categoria_fora_da_politica`, `tests/test_engine.py::test_rn_005_amb_002_fronteira_nota_fiscal_100_reais` e `tests/test_engine.py::test_rn_006_amb_004_deteccao_duplicatas` passam
   - **Commit:** `feat(T-004)`
 
-- [ ] **T-005** — Implementar apuração de regime de viagem (+50%) e controle de saldo diário com reembolso parcial por categoria (`src/engine.py`)
+- [x] **T-005** — Implementar apuração de regime de viagem (+50%) e controle de saldo diário com reembolso parcial por categoria (`src/engine.py`)
   - **Atende:** RN-007, RN-008, AMB-001, AMB-007, AMB-008, CA-002, CA-008
   - **Aceite:** `tests/test_engine.py::test_rn_007_amb_007_amb_008_regime_viagem_hospedagem_valida` e `tests/test_engine.py::test_rn_008_amb_001_limite_diario_cumulativo_e_reembolso_parcial` passam
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-005)`
 
 ## Fase 3 — Casos de borda
 
