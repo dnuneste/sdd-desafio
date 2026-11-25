@@ -29,10 +29,10 @@
   - **Aceite:** `tests/test_engine.py::test_rn_002_amb_006_recusa_valor_negativo_ou_zero` e `tests/test_engine.py::test_rn_003_amb_005_amb_010_periodo_competencia_e_fim_de_semana` passam
   - **Commit:** `feat(T-003)`
 
-- [ ] **T-004** — Implementar validação de categorias elegíveis, detecção de duplicatas e exigência de nota fiscal acima de R$ 100,00 (`src/engine.py`)
+- [x] **T-004** — Implementar validação de categorias elegíveis, detecção de duplicatas e exigência de nota fiscal acima de R$ 100,00 (`src/engine.py`)
   - **Atende:** RN-004, RN-005, RN-006, AMB-002, AMB-003, AMB-004, CA-003, CA-004, CA-005
   - **Aceite:** `tests/test_engine.py::test_rn_004_amb_003_categoria_fora_da_politica`, `tests/test_engine.py::test_rn_005_amb_002_fronteira_nota_fiscal_100_reais` e `tests/test_engine.py::test_rn_006_amb_004_deteccao_duplicatas` passam
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-004)`
 
 - [ ] **T-005** — Implementar apuração de regime de viagem (+50%) e controle de saldo diário com reembolso parcial por categoria (`src/engine.py`)
   - **Atende:** RN-007, RN-008, AMB-001, AMB-007, AMB-008, CA-002, CA-008

@@ -192,3 +192,108 @@ def test_rn_003_amb_005_amb_010_periodo_competencia_e_fim_de_semana() -> None:
         tem_nota_fiscal=True,
     )
     assert validar_periodo_competencia(sabado, periodo) is None
+
+
+def test_rn_004_amb_003_categoria_fora_da_politica() -> None:
+    """Verifica recusa de categoria fora da política (coworking) e aceite de categoria normalizada (RN-004, AMB-003)."""
+    from src.engine import validar_categoria_politica
+    from src.models import CodigoMotivo, StatusDespesa
+
+    politica = PoliticaReembolso()
+
+    coworking = DespesaInput.criar(
+        id="d-005",
+        data="2026-07-07",
+        categoria="coworking",
+        descricao="Diaria em espaco compartilhado",
+        fornecedor="HubOffice",
+        valor=Decimal("89.00"),
+        tem_nota_fiscal=True,
+    )
+    res_coworking = validar_categoria_politica(coworking, politica)
+    assert res_coworking is not None
+    assert res_coworking.status == StatusDespesa.RECUSADA
+    assert res_coworking.codigo_motivo == CodigoMotivo.CATEGORIA_NAO_REEMBOLSAVEL
+    assert res_coworking.valor_reembolsado == Decimal("0.00")
+    assert res_coworking.valor_glosado == Decimal("89.00")
+
+    maiuscula = DespesaInput.criar(
+        id="d-014",
+        data="2026-07-31",
+        categoria="ALIMENTACAO",
+        descricao="Jantar de encerramento",
+        fornecedor="Restaurante Tavola",
+        valor=Decimal("61.00"),
+        tem_nota_fiscal=True,
+    )
+    assert validar_categoria_politica(maiuscula, politica) is None
+
+
+def test_rn_005_amb_002_fronteira_nota_fiscal_100_reais() -> None:
+    """Verifica fronteira estrita > 100.00 para exigência de nota fiscal (RN-005, AMB-002)."""
+    from src.engine import validar_nota_fiscal
+    from src.models import CodigoMotivo, StatusDespesa
+
+    politica = PoliticaReembolso()
+
+    d003 = DespesaInput.criar(
+        id="d-003",
+        data="2026-07-06",
+        categoria="transporte_urbano",
+        descricao="Corrida aeroporto",
+        fornecedor="TaxiApp",
+        valor=Decimal("100.00"),
+        tem_nota_fiscal=False,
+    )
+    assert validar_nota_fiscal(d003, politica) is None
+
+    d004 = DespesaInput.criar(
+        id="d-004",
+        data="2026-07-06",
+        categoria="transporte_urbano",
+        descricao="Corrida hotel",
+        fornecedor="TaxiApp",
+        valor=Decimal("100.01"),
+        tem_nota_fiscal=False,
+    )
+    res_d004 = validar_nota_fiscal(d004, politica)
+    assert res_d004 is not None
+    assert res_d004.status == StatusDespesa.RECUSADA
+    assert res_d004.codigo_motivo == CodigoMotivo.SEM_NOTA_FISCAL
+    assert res_d004.valor_reembolsado == Decimal("0.00")
+    assert res_d004.valor_glosado == Decimal("100.01")
+
+
+def test_rn_006_amb_004_deteccao_duplicatas() -> None:
+    """Verifica aprovação da 1ª ocorrência e recusa da 2ª ocorrência idêntica com ID diferente (RN-006, AMB-004)."""
+    from src.engine import validar_duplicidade
+    from src.models import CodigoMotivo, StatusDespesa
+
+    chaves_vistas: set = set()
+
+    d006 = DespesaInput.criar(
+        id="d-006",
+        data="2026-07-09",
+        categoria="alimentacao",
+        descricao="Almoco",
+        fornecedor="Bistro Central",
+        valor=Decimal("54.90"),
+        tem_nota_fiscal=True,
+    )
+    d007 = DespesaInput.criar(
+        id="d-007",
+        data="2026-07-09",
+        categoria="alimentacao",
+        descricao="Almoco",
+        fornecedor="Bistro Central",
+        valor=Decimal("54.90"),
+        tem_nota_fiscal=True,
+    )
+
+    assert validar_duplicidade(d006, chaves_vistas) is None
+    res_d007 = validar_duplicidade(d007, chaves_vistas)
+    assert res_d007 is not None
+    assert res_d007.status == StatusDespesa.RECUSADA
+    assert res_d007.codigo_motivo == CodigoMotivo.DESPESA_DUPLICADA
+    assert res_d007.valor_reembolsado == Decimal("0.00")
+    assert res_d007.valor_glosado == Decimal("54.90")
