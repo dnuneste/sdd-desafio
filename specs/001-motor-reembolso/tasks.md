@@ -17,10 +17,10 @@
   - **Aceite:** `tests/test_engine.py::test_rn_001_amb_009_arredondamento_half_up` e `tests/test_engine.py::test_rn_001_amb_003_normalizacao_categoria` passam
   - **Commit:** `feat(T-001)`
 
-- [ ] **T-002** — Implementar parser de entrada JSON e serializador de saída JSON com precisão `Decimal` (`src/io_handler.py`)
+- [x] **T-002** — Implementar parser de entrada JSON e serializador de saída JSON com precisão `Decimal` (`src/io_handler.py`)
   - **Atende:** RN-001, AMB-009 (Seção 4 da spec — Contrato de Entrada e Saída)
   - **Aceite:** `tests/test_engine.py::test_rn_001_io_parsing_e_serializacao_json` passa
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-002)`
 
 ## Fase 2 — Regras de negócio
 
