@@ -1,101 +1,65 @@
-# Desafio Prático — Spec Driven Development
+# Motor de Cálculo de Reembolso de Despesas — SDD
 
-Aula bônus de SDD, fechando a trilha:
+Motor determinístico para avaliação e cálculo de reembolso de despesas corporativas, desenvolvido com **Spec-Driven Development (SDD)**.
 
-`AI Fluency` → `Claude 101` → `Claude Code 101` → `Building with the Claude API` → `Claude Code in Action` → `Módulo SDD` → **Desafio**
-
-**Individual · 2 dias · Claude Code**
+Dado um arquivo JSON contendo as despesas de um colaborador em um período de competência, o sistema avalia cada lançamento contra a política de reembolso desambiguada, gerando um JSON com o resumo financeiro consolidado, o status, o valor reembolsado, o valor glosado e a justificativa auditável item a item.
 
 ---
 
-## Comece por aqui
+## Pré-requisitos
 
-1. **[`DESAFIO.md`](DESAFIO.md)** — o enunciado. Leia inteiro antes de escrever qualquer coisa.
-2. **[`RUBRICA.md`](RUBRICA.md)** — como você é avaliado. É pública de propósito; leia antes de começar.
-3. **[`exemplos/despesas-exemplo.json`](exemplos/despesas-exemplo.json)** — a entrada de referência. Não é decoração: percorra item por item antes de escrever a spec.
-4. **[`FAQ.md`](FAQ.md)** — travou? Comece por aqui. **O instrutor está fora durante o desafio**, então o FAQ é o canal de suporte.
+- **Python 3.12+** (o motor de produção utiliza exclusivamente a biblioteca padrão do Python — zero dependências externas para rodar a CLI).
+- **`pytest`** (apenas para execução da suíte de testes automatizados).
 
 ---
 
-## Como participar
+## Como rodar a CLI
 
-**1. Faça um fork deste repositório.** Ele precisa ser público, ou você não conseguirá compartilhar depois.
-
-**2. Clone o seu fork e prepare a estrutura de trabalho:**
+Na raiz do repositório, execute:
 
 ```bash
-git clone https://github.com/<seu-usuario>/sdd-desafio.git
-cd sdd-desafio
-cp template/CLAUDE.md .
-cp -r template/specs .
-cp -r template/docs .
-git add -A && git commit -m "chore: estrutura inicial a partir do template"
+python -m src.cli calcular --input exemplos/despesas-exemplo.json --output resultado.json
 ```
 
-<details>
-<summary>PowerShell</summary>
-
-```powershell
-git clone https://github.com/<seu-usuario>/sdd-desafio.git
-cd sdd-desafio
-Copy-Item template\CLAUDE.md .
-Copy-Item template\specs . -Recurse
-Copy-Item template\docs . -Recurse
-git add -A; git commit -m "chore: estrutura inicial a partir do template"
-```
-</details>
-
-Os arquivos em `template/` são esqueletos com as perguntas que cada documento precisa responder. Deixe a pasta `template/` onde está — ela serve de referência.
-
-**3. Trabalhe no seu fork**, seguindo as três regras do jogo descritas no [`DESAFIO.md`](DESAFIO.md):
-
-- Nenhum commit sem task
-- Explicação no chat que não está na spec é bug de spec
-- Interações exportadas (`/export`) e commitadas em `docs/sessions/`
-
-**4. No Dia 2, às 10h**, você recebe uma mudança de requisito pelo canal da turma. Ela é obrigatória e vale 20 pontos. Chegue nesse momento com o sistema base funcionando e testado.
-
-> Durante os dois dias o instrutor está de férias e não responde mensagens. Dúvida de processo: [`FAQ.md`](FAQ.md). Dúvida sobre o que a política do RH significa não tem resposta — decidir isso é o exercício.
-
-**5. Entregue** enviando o link do seu fork no formulário. Prazo: **Dia 2, 18h**.
+O arquivo `resultado.json` será gerado com a avaliação completa dos 14 lançamentos de referência.
 
 ---
 
-## O que o seu fork precisa conter ao final
+## Como rodar os testes automatizados
 
+Instale o `pytest` (caso ainda não esteja instalado no seu ambiente/venv) e execute a suíte:
+
+```bash
+python -m pip install pytest
+python -m pytest -v
 ```
-seu-fork/
-├── CLAUDE.md                     # convenções do projeto para o agente
-├── README.md                     # como rodar e como testar o SEU projeto
+
+---
+
+## Estrutura do Projeto e Rastreabilidade SDD
+
+```text
+├── CLAUDE.md                                   # Convenções e regras de trabalho para o agente
+├── README.md                                   # Instruções de execução e testes deste projeto
+├── exemplos/
+│   └── despesas-exemplo.json                   # Lote de entrada de referência (14 casos)
 ├── specs/
 │   └── 001-motor-reembolso/
-│       ├── spec.md               # o QUÊ e o PORQUÊ
-│       ├── plan.md               # o COMO
-│       ├── tasks.md              # T-001..T-0NN, com critério de aceite
-│       └── DECISIONS.md          # log de mudanças de spec
+│       ├── spec.md                             # Especificação funcional (RN-001..RN-008, AMB-001..AMB-010, CA-001..CA-008)
+│       ├── plan.md                             # Plano técnico e decisões arquiteturais (DT-001..DT-003)
+│       ├── tasks.md                            # Tasks executáveis (T-001..T-007) e matriz de cobertura
+│       └── DECISIONS.md                        # Histórico vivo de decisões e evoluções da spec (D-001..D-003)
 ├── src/
+│   ├── models.py                               # Modelos de domínio imutáveis e normalização/arredondamento (RN-001)
+│   ├── policy.py                               # Parâmetros isolados da política de reembolso
+│   ├── engine.py                               # Núcleo funcional puro de avaliação em duas passagens (RN-002..RN-008)
+│   ├── io_handler.py                           # Leitura e escrita JSON preservando precisão Decimal
+│   └── cli.py                                  # Interface de linha de comando (`calcular --input ... --output ...`)
 ├── tests/
+│   ├── test_engine.py                          # Testes unitários por regra de negócio e ambiguidade
+│   ├── test_edge_cases.py                      # Testes dos casos de borda (Seções 7 e 8) e lote de referência (CA-001)
+│   └── test_cli.py                             # Testes ponta a ponta da CLI
 └── docs/
-    ├── sessions/                 # exports das suas conversas com o Claude
-    └── RELATORIO.md              # o relatório final
+    ├── sessions/                               # Histórico exportado das sessões de trabalho com o agente
+    └── RELATORIO.md                            # Relatório final estruturado pelos 4 Ds do AI Fluency
 ```
-
-Sobre o `README.md`: substitua este arquivo pelo README do **seu** projeto — como rodar, como testar, o que você construiu. Um README que não permite rodar o projeto custa pontos.
-
----
-
-## Antes de começar, confirme que o `/export` funciona
-
-Abra o Claude Code, troque duas mensagens, rode `/export` e confirme que o arquivo foi gerado.
-
-Faça isso **agora**, não no Dia 2. Sem `docs/sessions/`, o critério de relatório vale zero — e já aconteceu de gente que fez tudo certo descobrir no último dia que não tinha registro nenhum do trabalho.
-
-Exporte ao final de **cada** sessão, nomeando `docs/sessions/01-descricao-curta.md`, `02-...`, e assim por diante.
-
----
-
-## O resumo em um parágrafo
-
-Você vai receber uma política de reembolso escrita por um RH, com a redação ruim que uma política de RH real tem. Ela é ambígua em vários pontos, e você não tem acesso a ninguém para tirar dúvida. O trabalho não é implementar — é **especificar**: encontrar cada ambiguidade, decidir explicitamente, justificar e registrar. O produto funcionando vale **10 dos 100 pontos**. Os outros 90 estão na spec, na rastreabilidade `spec → tasks → commits → testes`, na resposta à mudança de requisito do Dia 2 e no relatório.
-
-Isso é deliberado. Um projeto que roda perfeitamente com spec fraca tira nota baixa; um projeto com bug conhecido, spec impecável e trilha limpa tira nota alta.

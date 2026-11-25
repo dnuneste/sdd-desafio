@@ -48,10 +48,10 @@
 
 ## Fase 4 — Saída e CLI
 
-- [ ] **T-007** — Implementar interface CLI (`calcular --input ... --output ...`), testes ponta a ponta da CLI e atualizar `README.md` com instruções de execução (`src/cli.py`, `tests/test_cli.py`, `README.md`)
+- [x] **T-007** — Implementar interface CLI (`calcular --input ... --output ...`), testes ponta a ponta da CLI e atualizar `README.md` com instruções de execução (`src/cli.py`, `tests/test_cli.py`, `README.md`)
   - **Atende:** CA-001 (Interface CLI fixa do desafio)
   - **Aceite:** `tests/test_cli.py::test_cli_calcular_gera_arquivo_saida_valido` passa e o comando `python -m src.cli calcular --input exemplos/despesas-exemplo.json --output resultado.json` executa com código 0
-  - **Commit:** `<pendente>`
+  - **Commit:** `feat(T-007)`
 
 ---
 

@@ -322,14 +322,14 @@ A ordem de precedência é determinística e obrigatória, pois altera o motivo 
 
 O sistema está pronto quando:
 
-- [ ] **CA-001:** Ao processar `exemplos/despesas-exemplo.json`, o sistema gera um JSON válido contendo os 14 itens em `resultados` na mesma ordem da entrada, com `total_solicitado: 1861.84`, `total_reembolsado: 585.43`, `total_glosado: 1276.41`, `quantidade_aprovadas: 3`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 7`.
-- [ ] **CA-002:** Despesas de mesma categoria e data acumulam consumo contra um único limite diário (`d-001` reembolsa `60.00` e `d-002` reembolsa `0.00`).
-- [ ] **CA-003:** Despesa de exatamente `100.00` sem nota fiscal (`d-003`) é aceita para cálculo de limite (reembolsa `80.00`), enquanto despesa de `100.01` sem nota fiscal (`d-004`) é recusada com `SEM_NOTA_FISCAL`.
-- [ ] **CA-004:** Categorias são tratadas de forma case-insensitive (`d-014` `"ALIMENTACAO"` é processada como `"alimentacao"` e reembolsa `60.00`) e categorias fora da lista (`d-005` `"coworking"`) são recusadas com `CATEGORIA_NAO_REEMBOLSAVEL`.
-- [ ] **CA-005:** Despesas duplicadas (`d-007` idêntica a `d-006` exceto pelo `id`) são recusadas com `DESPESA_DUPLICADA` e não consomem saldo diário.
-- [ ] **CA-006:** Despesas fora do intervalo `[periodo.inicio, periodo.fim]` (`d-008`) são recusadas com `FORA_PERIODO_COMPETENCIA`, enquanto despesas em sábado dentro do intervalo (`d-012`) são aprovadas.
-- [ ] **CA-007:** Despesas com valor negativo ou zero (`d-009`, `-45.00`) são recusadas com `VALOR_INVALIDO`, não entram no `total_solicitado` e não alteram saldos diários.
-- [ ] **CA-008:** Hospedagem válida (`d-010` em `2026-07-14`) é limitada a `250.00` e ativa regime de viagem (+50% nas categorias cotidianas) para `2026-07-14` e `2026-07-15`, avaliando `d-011` (`33.33`) sob o teto ampliado de `90.00`; hospedagem recusada por falta de NF (`d-013`) não ativa regime de viagem.
+- [x] **CA-001:** Ao processar `exemplos/despesas-exemplo.json`, o sistema gera um JSON válido contendo os 14 itens em `resultados` na mesma ordem da entrada, com `total_solicitado: 1861.84`, `total_reembolsado: 585.43`, `total_glosado: 1276.41`, `quantidade_aprovadas: 3`, `quantidade_aprovadas_parcialmente: 4` e `quantidade_recusadas: 7`.
+- [x] **CA-002:** Despesas de mesma categoria e data acumulam consumo contra um único limite diário (`d-001` reembolsa `60.00` e `d-002` reembolsa `0.00`).
+- [x] **CA-003:** Despesa de exatamente `100.00` sem nota fiscal (`d-003`) é aceita para cálculo de limite (reembolsa `80.00`), enquanto despesa de `100.01` sem nota fiscal (`d-004`) é recusada com `SEM_NOTA_FISCAL`.
+- [x] **CA-004:** Categorias são tratadas de forma case-insensitive (`d-014` `"ALIMENTACAO"` é processada como `"alimentacao"` e reembolsa `60.00`) e categorias fora da lista (`d-005` `"coworking"`) são recusadas com `CATEGORIA_NAO_REEMBOLSAVEL`.
+- [x] **CA-005:** Despesas duplicadas (`d-007` idêntica a `d-006` exceto pelo `id`) são recusadas com `DESPESA_DUPLICADA` e não consomem saldo diário.
+- [x] **CA-006:** Despesas fora do intervalo `[periodo.inicio, periodo.fim]` (`d-008`) são recusadas com `FORA_PERIODO_COMPETENCIA`, enquanto despesas em sábado dentro do intervalo (`d-012`) são aprovadas.
+- [x] **CA-007:** Despesas com valor negativo ou zero (`d-009`, `-45.00`) são recusadas com `VALOR_INVALIDO`, não entram no `total_solicitado` e não alteram saldos diários.
+- [x] **CA-008:** Hospedagem válida (`d-010` em `2026-07-14`) é limitada a `250.00` e ativa regime de viagem (+50% nas categorias cotidianas) para `2026-07-14` e `2026-07-15`, avaliando `d-011` (`33.33`) sob o teto ampliado de `90.00`; hospedagem recusada por falta de NF (`d-013`) não ativa regime de viagem.
 
 ## 10. O que fica em aberto
 
